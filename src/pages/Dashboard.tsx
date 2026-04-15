@@ -23,16 +23,18 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  async function loadData() {
+    setLoading(true);
+    const [p, t] = await Promise.all([
+      getAllProducts(),
+      getAllTransactions(),
+    ]);
+    setProducts(p);
+    setTransactions(t);
+    setLoading(false);
+  }
+
   useEffect(() => {
-    async function loadData() {
-      const [p, t] = await Promise.all([
-        getAllProducts(),
-        getAllTransactions(),
-      ]);
-      setProducts(p);
-      setTransactions(t);
-      setLoading(false);
-    }
     loadData();
   }, []);
 
@@ -129,7 +131,7 @@ export default function Dashboard() {
     for (const p of sampleProducts) {
       await addProduct(p);
     }
-    window.location.reload();
+    loadData();
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Memuat data...</div>;
@@ -326,13 +328,13 @@ export default function Dashboard() {
               <span className="text-xs font-bold uppercase tracking-widest">Business Insights</span>
             </div>
             <h2 className="text-3xl font-black mb-4 leading-tight">
-              {analytics.revenuePercent > 0 
+              {analytics.vsYesterday > 0 
                 ? 'Bisnis Anda Sedang Bertumbuh!' 
                 : 'Waktunya Evaluasi Strategi?'}
             </h2>
             <p className="text-indigo-100 mb-6 text-lg">
-              {analytics.revenuePercent > 0 
-                ? `Pendapatan hari ini naik ${analytics.revenuePercent.toFixed(1)}% dibanding kemarin. Pertahankan momentum dengan promo paket bundling!`
+              {analytics.vsYesterday > 0 
+                ? `Pendapatan hari ini naik ${analytics.vsYesterday.toFixed(1)}% dibanding kemarin. Pertahankan momentum dengan promo paket bundling!`
                 : 'Pendapatan hari ini cenderung stabil. Coba tambahkan produk baru atau berikan diskon khusus jam makan siang.'}
             </p>
             <div className="flex gap-4">
