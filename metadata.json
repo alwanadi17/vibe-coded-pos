@@ -1,0 +1,6 @@
+{
+  "name": "UMKM PoS & Marketplace",
+  "description": "A local-first Point of Sale and Marketplace application for MSMEs using IndexedDB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
