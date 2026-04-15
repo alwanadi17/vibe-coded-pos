@@ -37,19 +37,36 @@ export default function TransactionHistory() {
   return (
     <div className="space-y-6 relative">
       <style>{`
+        .print-only {
+          display: none;
+        }
         @media print {
+          /* Hide everything by default */
           body * {
             visibility: hidden;
+            overflow: visible !important;
           }
+          /* Show only the receipt and its content */
           #print-receipt, #print-receipt * {
             visibility: visible;
           }
+          /* Position the receipt at the top left of the printed page */
           #print-receipt {
-            position: absolute;
+            display: block !important;
+            position: fixed;
             left: 0;
             top: 0;
             width: 100%;
-            padding: 20px;
+            height: auto;
+            padding: 0;
+            margin: 0;
+            background: white;
+            z-index: 9999;
+          }
+          /* Remove shadows and borders for cleaner print */
+          #print-receipt {
+            box-shadow: none !important;
+            border: none !important;
           }
         }
       `}</style>
@@ -206,7 +223,7 @@ export default function TransactionHistory() {
 
       {/* Hidden Print Content */}
       {selectedTransaction && (
-        <div id="print-receipt" className="hidden">
+        <div id="print-receipt" className="print-only">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="bg-indigo-600 p-3 rounded-2xl mb-4">
               <Store className="text-white w-8 h-8" />

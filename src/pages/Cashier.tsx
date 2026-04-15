@@ -119,18 +119,43 @@ export default function Cashier() {
     <div className="h-[calc(100vh-120px)] flex gap-6 relative">
       <style>{`
         @media print {
+          /* Hide everything by default */
           body * {
             visibility: hidden;
+            overflow: visible !important;
           }
+          /* Show only the receipt and its content */
           #receipt-content, #receipt-content * {
             visibility: visible;
           }
+          /* Position the receipt at the top left of the printed page */
           #receipt-content {
-            position: absolute;
+            position: fixed;
             left: 0;
             top: 0;
             width: 100%;
-            padding: 20px;
+            height: auto;
+            padding: 0;
+            margin: 0;
+            background: white;
+            z-index: 9999;
+          }
+          /* Remove shadows and borders for cleaner print */
+          #receipt-content {
+            box-shadow: none !important;
+            border: none !important;
+          }
+          /* Hide the modal background and close buttons during print */
+          .fixed.inset-0.z-\[110\] {
+            background: transparent !important;
+            backdrop-filter: none !important;
+          }
+          .fixed.inset-0.z-\[110\] > div:first-child {
+            display: none !important;
+          }
+          /* Hide the action buttons in the modal footer */
+          #receipt-modal-footer {
+            display: none !important;
           }
         }
       `}</style>
@@ -414,7 +439,7 @@ export default function Cashier() {
                 </div>
               </div>
 
-              <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 relative z-20">
+              <div id="receipt-modal-footer" className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3 relative z-20">
                 <button 
                   onClick={() => setShowReceipt(false)}
                   className="flex-1 px-4 py-3 bg-white border border-gray-200 text-gray-600 font-bold rounded-2xl text-sm hover:bg-gray-100 transition-all cursor-pointer"
