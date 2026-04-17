@@ -4,7 +4,7 @@
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { Product, Transaction, Supplier, Category } from '../types';
+import { Product, Transaction, Supplier, Category, GlobalSettings } from '../types';
 
 interface PosUmkmDB extends DBSchema {
   products: {
@@ -25,10 +25,14 @@ interface PosUmkmDB extends DBSchema {
     key: string;
     value: Category;
   };
+  settings: {
+    key: string;
+    value: GlobalSettings;
+  };
 }
 
 const DB_NAME = 'PosUmkmDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export async function getDB(): Promise<IDBPDatabase<PosUmkmDB>> {
   return openDB<PosUmkmDB>(DB_NAME, DB_VERSION, {
@@ -59,8 +63,29 @@ export async function getDB(): Promise<IDBPDatabase<PosUmkmDB>> {
           keyPath: 'id',
         });
       }
+
+      if (oldVersion < 4) {
+        db.createObjectStore('settings', {
+          keyPath: 'id',
+        });
+      }
     },
   });
+}
+
+// Settings CRUD
+export async function getSettings(): Promise<GlobalSettings> {
+  const db = await getDB();
+  const settings = await db.get('settings', 'global');
+  if (!settings) {
+    return { id: 'global', marginPercentage: 30, lowStockThreshold: 5, adminPin: '1234' };
+  }
+  return settings;
+}
+
+export async function updateSettings(settings: GlobalSettings): Promise<void> {
+  const db = await getDB();
+  await db.put('settings', settings);
 }
 
 // Category CRUD
@@ -162,6 +187,14 @@ export async function seedInitialPerfumes(): Promise<void> {
   try {
     const db = await getDB();
     
+    // Seed settings
+    const settingsCount = await db.count('settings');
+    if (settingsCount === 0) {
+      const tx = db.transaction('settings', 'readwrite');
+      tx.store.add({ id: 'global', marginPercentage: 30, lowStockThreshold: 5, adminPin: '1234' });
+      await tx.done;
+    }
+
     // Clean up duplicate categories if any due to React StrictMode
     const allCategories = await db.getAll('categories');
     const seenCategories = new Set<string>();
@@ -239,28 +272,28 @@ export async function seedInitialPerfumes(): Promise<void> {
 
     const initialPerfumes: Product[] = [
       // Maison Margiela Replica
-      { id: crypto.randomUUID(), nama: 'When the Rain Stops', harga: 2350000, stok: 15, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'By the Fireplace', harga: 2350000, stok: 10, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1595425970377-c9703bc48b2d?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'Sailing Day', harga: 2350000, stok: 20, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1629853900913-92ed49c95276?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'Jazz Club', harga: 2500000, stok: 12, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1588696772719-79ad2af3910c?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'When the Rain Stops', hargaModal: 1645000, harga: 2350000, stok: 15, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'By the Fireplace', hargaModal: 1645000, harga: 2350000, stok: 10, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1595425970377-c9703bc48b2d?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'Sailing Day', hargaModal: 1645000, harga: 2350000, stok: 20, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1629853900913-92ed49c95276?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'Jazz Club', hargaModal: 1750000, harga: 2500000, stok: 12, kategori: 'Maison Margiela Replica', urlGambar: 'https://images.unsplash.com/photo-1588696772719-79ad2af3910c?auto=format&fit=crop&q=80&w=400' },
       
       // Le Labo
-      { id: crypto.randomUUID(), nama: 'Another 13', harga: 3800000, stok: 8, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'Santal 33', harga: 3800000, stok: 12, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1616949755610-8c9bac08f9d7?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'Bergamote 22', harga: 3500000, stok: 5, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1602693892795-5cbda7daec2a?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'Another 13', hargaModal: 2660000, harga: 3800000, stok: 8, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'Santal 33', hargaModal: 2660000, harga: 3800000, stok: 12, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1616949755610-8c9bac08f9d7?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'Bergamote 22', hargaModal: 2450000, harga: 3500000, stok: 5, kategori: 'Le Labo', urlGambar: 'https://images.unsplash.com/photo-1602693892795-5cbda7daec2a?auto=format&fit=crop&q=80&w=400' },
 
       // Yves Saint Laurent
-      { id: crypto.randomUUID(), nama: 'Y', harga: 2100000, stok: 25, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=400&auto=format&fit=crop' },
-      { id: crypto.randomUUID(), nama: 'Libre', harga: 2300000, stok: 18, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400' },
-      { id: crypto.randomUUID(), nama: 'La Nuit de L\'Homme', harga: 2100000, stok: 14, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'Y', hargaModal: 1470000, harga: 2100000, stok: 25, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?q=80&w=400&auto=format&fit=crop' },
+      { id: crypto.randomUUID(), nama: 'Libre', hargaModal: 1610000, harga: 2300000, stok: 18, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'La Nuit de L\'Homme', hargaModal: 1470000, harga: 2100000, stok: 14, kategori: 'Yves Saint Laurent', urlGambar: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&q=80&w=400' },
 
       // Tom Ford
-      { id: crypto.randomUUID(), nama: 'Oud Wood', harga: 4800000, stok: 7, kategori: 'Tom Ford', urlGambar: 'https://images.unsplash.com/photo-1587820108343-441f71dfb271?auto=format&fit=crop&q=80&w=400' },
-      { id: crypto.randomUUID(), nama: 'Tobacco Vanille', harga: 4500000, stok: 9, kategori: 'Tom Ford', urlGambar: 'https://images.unsplash.com/photo-1595700779836-e04e46048d08?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'Oud Wood', hargaModal: 3360000, harga: 4800000, stok: 7, kategori: 'Tom Ford', urlGambar: 'https://images.unsplash.com/photo-1587820108343-441f71dfb271?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'Tobacco Vanille', hargaModal: 3150000, harga: 4500000, stok: 9, kategori: 'Tom Ford', urlGambar: 'https://images.unsplash.com/photo-1595700779836-e04e46048d08?auto=format&fit=crop&q=80&w=400' },
 
       // Creed
-      { id: crypto.randomUUID(), nama: 'Aventus', harga: 5000000, stok: 10, kategori: 'Creed', urlGambar: 'https://images.unsplash.com/photo-1614846467385-eb9615fd6fb4?auto=format&fit=crop&q=80&w=400' },
-      { id: crypto.randomUUID(), nama: 'Silver Mountain Water', harga: 4700000, stok: 6, kategori: 'Creed', urlGambar: 'https://images.unsplash.com/photo-1601332766864-1da5faae6a63?auto=format&fit=crop&q=80&w=400' }
+      { id: crypto.randomUUID(), nama: 'Aventus', hargaModal: 3500000, harga: 5000000, stok: 10, kategori: 'Creed', urlGambar: 'https://images.unsplash.com/photo-1614846467385-eb9615fd6fb4?auto=format&fit=crop&q=80&w=400' },
+      { id: crypto.randomUUID(), nama: 'Silver Mountain Water', hargaModal: 3290000, harga: 4700000, stok: 6, kategori: 'Creed', urlGambar: 'https://images.unsplash.com/photo-1601332766864-1da5faae6a63?auto=format&fit=crop&q=80&w=400' }
     ];
 
     const tx = db.transaction('products', 'readwrite');

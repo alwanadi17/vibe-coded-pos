@@ -3,6 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export interface GlobalSettings {
+  id: 'global';
+  marginPercentage: number;
+  lowStockThreshold: number;
+  adminPin: string;
+}
+
 export interface Category {
   id: string;
   namaKategori: string;
@@ -21,6 +28,7 @@ export interface Product {
   id: string;
   nama: string;
   harga: number;
+  hargaModal?: number;
   stok: number;
   kategori: string;
   urlGambar: string;

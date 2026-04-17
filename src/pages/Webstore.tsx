@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
-import { ShoppingBag, X, Check, ArrowRight, Lock } from 'lucide-react';
-import { getAllProducts, addTransaction, getAllCategories } from '../lib/db';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingBag, X, Check, ArrowRight, Lock, Droplets } from 'lucide-react';
+import { getAllProducts, addTransaction, getAllCategories, getSettings } from '../lib/db';
 import { Product, CartItem, Category } from '../types';
 import { formatCurrency, cn } from '../lib/utils';
 import ProductImage from '../components/ProductImage';
@@ -15,6 +15,11 @@ export default function Webstore() {
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutStatus, setCheckoutStatus] = useState<'idle' | 'success'>('idle');
+
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [adminPinInput, setAdminPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProducts();
@@ -35,6 +40,17 @@ export default function Webstore() {
     const data = await getAllCategories();
     setCategories(data);
   }
+
+  const handleAdminAccess = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const settings = await getSettings();
+    if (adminPinInput === settings.adminPin || (!settings.adminPin && adminPinInput === '1234')) {
+      setPinModalOpen(false);
+      navigate('/admin');
+    } else {
+      setPinError(true);
+    }
+  };
 
   const brands = Array.from(new Set(categories.map(c => c.namaKategori)));
   
@@ -106,14 +122,25 @@ export default function Webstore() {
             <a href="#brands" className="hover:opacity-60 transition-opacity">Brands</a>
           </div>
           
-          <div className="absolute left-1/2 -translate-x-1/2 text-2xl font-serif tracking-widest uppercase">
-            Aura
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <Droplets className="w-5 h-5 text-[#1A1A1A]" />
+            <div className="text-xl font-serif tracking-widest uppercase text-[#1A1A1A]">
+              Lunaria
+            </div>
           </div>
           
           <div className="flex items-center gap-6">
-            <Link to="/admin" className="text-gray-400 hover:text-[#1A1A1A] transition-colors" title="Admin POS">
+            <button
+              onClick={() => {
+                setPinError(false);
+                setAdminPinInput('');
+                setPinModalOpen(true);
+              }}
+              className="text-gray-400 hover:text-[#1A1A1A] transition-colors"
+              title="Admin POS"
+            >
               <Lock className="w-4 h-4" />
-            </Link>
+            </button>
             <button 
               onClick={() => setCartOpen(true)}
               className="relative hover:opacity-60 transition-opacity"
@@ -361,6 +388,65 @@ export default function Webstore() {
               >
                 Continue Shopping
               </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin PIN Modal */}
+      <AnimatePresence>
+        {pinModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-[#1A1A1A]/80 backdrop-blur-md"
+              onClick={() => setPinModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-white p-10 max-w-sm w-full relative z-10 border border-gray-100 shadow-2xl rounded-none"
+            >
+              <div className="mb-8 text-center flex flex-col items-center">
+                <Lock className="w-8 h-8 stroke-[1.5] mb-4" />
+                <h3 className="font-serif text-2xl uppercase tracking-widest">Admin Access</h3>
+                <p className="text-xs text-gray-400 mt-2 tracking-widest uppercase">Secured area</p>
+              </div>
+
+              <form onSubmit={handleAdminAccess} className="space-y-6">
+                <div>
+                  <input
+                    type="password"
+                    maxLength={6}
+                    value={adminPinInput}
+                    onChange={e => {
+                      setAdminPinInput(e.target.value.replace(/\D/g, ''));
+                      setPinError(false);
+                    }}
+                    autoFocus
+                    placeholder="ENTER PIN"
+                    className={cn(
+                      "w-full text-center tracking-[0.5em] font-mono text-2xl py-4 border-b-2 bg-transparent focus:outline-none transition-colors",
+                      pinError ? "border-red-500 text-red-500" : "border-gray-200 focus:border-[#1A1A1A]"
+                    )}
+                  />
+                  {pinError ? (
+                    <p className="text-center text-red-500 text-xs uppercase tracking-widest mt-3">Incorrect PIN</p>
+                  ) : (
+                    <p className="text-center text-gray-400 text-xs uppercase tracking-widest mt-3 opacity-0">Placeholder</p>
+                  )}
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full bg-[#1A1A1A] text-white py-4 text-xs uppercase tracking-[0.1em] font-medium hover:bg-black transition-colors flex items-center justify-center gap-2"
+                >
+                  Unlock <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
             </motion.div>
           </div>
         )}

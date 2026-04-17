@@ -4,7 +4,7 @@
  */
 
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, History, Store, Truck, Tags } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, History, Droplets, Truck, Tags, Settings as SettingsIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const navItems = [
@@ -14,16 +14,17 @@ const navItems = [
   { to: '/admin/categories', label: 'Kelola Kategori', icon: Tags },
   { to: '/admin/suppliers', label: 'Kelola Supplier', icon: Truck },
   { to: '/admin/history', label: 'Riwayat Transaksi', icon: History },
+  { to: '/admin/settings', label: 'Pengaturan Sistem', icon: SettingsIcon },
 ];
 
 export default function Sidebar() {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 flex items-center gap-3 border-bottom border-gray-100">
-        <div className="bg-indigo-600 p-2 rounded-lg">
-          <Store className="text-white w-6 h-6" />
+      <div className="p-6 flex items-center gap-3 border-b border-gray-100">
+        <div className="bg-[#1A1A1A] p-2 rounded-lg">
+          <Droplets className="text-[#F5F2ED] w-6 h-6" />
         </div>
-        <h1 className="font-bold text-xl tracking-tight text-gray-900">UMKM PoS</h1>
+        <h1 className="font-serif font-medium text-xl tracking-wide uppercase text-gray-900">LuxePOS</h1>
       </div>
       
       <nav className="flex-1 px-4 py-4 space-y-1">

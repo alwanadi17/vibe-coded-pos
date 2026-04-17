@@ -14,6 +14,7 @@ import ManageCategories from './pages/ManageCategories';
 import Cashier from './pages/Cashier';
 import TransactionHistory from './pages/TransactionHistory';
 import Webstore from './pages/Webstore';
+import Settings from './pages/Settings';
 
 export default function App() {
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="products" element={<ManageProducts />} />
           <Route path="suppliers" element={<ManageSuppliers />} />
           <Route path="categories" element={<ManageCategories />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="cashier" element={<Cashier />} />
           <Route path="history" element={<TransactionHistory />} />
         </Route>

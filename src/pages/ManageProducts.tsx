@@ -5,8 +5,8 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { Plus, Search, Edit2, Trash2, Package, X, Truck } from 'lucide-react';
-import { getAllProducts, addProduct, updateProduct, deleteProduct, getAllSuppliers, getAllCategories } from '../lib/db';
-import { Product, Supplier, Category } from '../types';
+import { getAllProducts, addProduct, updateProduct, deleteProduct, getAllSuppliers, getAllCategories, getSettings } from '../lib/db';
+import { Product, Supplier, Category, GlobalSettings } from '../types';
 import { formatCurrency, cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import ProductImage from '../components/ProductImage';
@@ -17,9 +17,11 @@ export default function ManageProducts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [settings, setSettings] = useState<GlobalSettings | null>(null);
   
-  const [formData, setFormData] = useState<Partial<Product> & { harga: string | number, stok: string | number }>({
+  const [formData, setFormData] = useState<Partial<Product> & { hargaModal: string | number, harga: string | number, stok: string | number }>({
     nama: '',
+    hargaModal: '',
     harga: '',
     stok: '',
     kategori: '',
@@ -33,7 +35,13 @@ export default function ManageProducts() {
     loadProducts();
     loadSuppliers();
     loadCategories();
+    loadSettings();
   }, []);
+
+  async function loadSettings() {
+    const data = await getSettings();
+    setSettings(data);
+  }
 
   async function loadCategories() {
     const data = await getAllCategories();
@@ -55,12 +63,14 @@ export default function ManageProducts() {
       setEditingProduct(product);
       setFormData({
         ...product,
+        hargaModal: product.hargaModal || '',
         supplierId: product.supplierId || '',
       });
     } else {
       setEditingProduct(null);
       setFormData({
         nama: '',
+        hargaModal: '',
         harga: '',
         stok: '',
         kategori: '',
@@ -76,10 +86,25 @@ export default function ManageProducts() {
     setEditingProduct(null);
   };
 
+  const handleHargaModalChange = (val: string) => {
+    const modalNum = Number(val);
+    if (!settings || isNaN(modalNum)) {
+      setFormData(prev => ({ ...prev, hargaModal: val }));
+      return;
+    }
+    
+    // Auto calculate sell price
+    const marginAmount = modalNum * (settings.marginPercentage / 100);
+    const suggestedSellPrice = modalNum + marginAmount;
+    
+    setFormData(prev => ({ ...prev, hargaModal: val, harga: Math.round(suggestedSellPrice) }));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const productData = {
       ...formData,
+      hargaModal: formData.hargaModal ? Number(formData.hargaModal) : undefined,
       harga: Number(formData.harga),
       stok: Number(formData.stok),
       id: editingProduct ? editingProduct.id : crypto.randomUUID(),
@@ -273,16 +298,29 @@ export default function ManageProducts() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Harga (IDR)</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Harga Modal (Beli)</label>
+                    <input
+                      type="number"
+                      value={formData.hargaModal}
+                      onChange={e => handleHargaModalChange(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium"
+                      placeholder="Opsional, auto-hitung jual"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Harga Jual</label>
                     <input
                       required
                       type="number"
                       value={formData.harga}
                       onChange={e => setFormData({ ...formData, harga: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      className="w-full px-4 py-2.5 bg-white border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-bold text-indigo-700"
                       placeholder="Contoh: 3500000"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Stok</label>
                     <input
@@ -294,21 +332,20 @@ export default function ManageProducts() {
                       placeholder="Contoh: 15"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori (Brand)</label>
-                  <select
-                    required
-                    value={formData.kategori}
-                    onChange={e => setFormData({ ...formData, kategori: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                  >
-                    <option value="">Pilih Kategori/Brand</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.namaKategori}>{c.namaKategori}</option>
-                    ))}
-                  </select>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori (Brand)</label>
+                    <select
+                      required
+                      value={formData.kategori}
+                      onChange={e => setFormData({ ...formData, kategori: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                    >
+                      <option value="">Pilih Brand</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.namaKategori}>{c.namaKategori}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">

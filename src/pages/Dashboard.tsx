@@ -9,10 +9,10 @@ import {
   ArrowUpRight, ArrowDownRight, AlertTriangle, 
   Trophy, Calendar, ChevronRight 
 } from 'lucide-react';
-import { getAllProducts, getAllTransactions, addProduct } from '../lib/db';
+import { getAllProducts, getAllTransactions, addProduct, getSettings } from '../lib/db';
 import { formatCurrency, cn, formatDate } from '../lib/utils';
 import { motion } from 'motion/react';
-import { Transaction, Product } from '../types';
+import { Transaction, Product, GlobalSettings } from '../types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Cell, AreaChart, Area 
@@ -22,15 +22,18 @@ export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<GlobalSettings | null>(null);
 
   async function loadData() {
     setLoading(true);
-    const [p, t] = await Promise.all([
+    const [p, t, s] = await Promise.all([
       getAllProducts(),
       getAllTransactions(),
+      getSettings(),
     ]);
     setProducts(p);
     setTransactions(t);
+    setSettings(s);
     setLoading(false);
   }
 
@@ -39,6 +42,7 @@ export default function Dashboard() {
   }, []);
 
   const analytics = useMemo(() => {
+    if (!settings) return null;
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
     
@@ -92,8 +96,8 @@ export default function Dashboard() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3);
 
-    // 3. Stock Warnings
-    const stockWarnings = products.filter(p => p.stok < 5);
+    // 3. Stock Warnings based on Global Settings
+    const stockWarnings = products.filter(p => p.stok <= settings.lowStockThreshold);
 
     // 4. Chart Data (Last 7 Days)
     const last7Days = [...Array(7)].map((_, i) => {
@@ -135,6 +139,7 @@ export default function Dashboard() {
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Memuat data...</div>;
+  if (!analytics) return <div className="p-8 text-center text-gray-500">Menyiapkan konfigurasi...</div>;
 
   const statCards = [
     {
