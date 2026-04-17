@@ -3,25 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useLocation } from 'react-router-dom';
-import { Search, Bell, User } from 'lucide-react';
+import { useLocation, Link } from 'react-router-dom';
+import { Search, Bell, User, ArrowLeft } from 'lucide-react';
 
 export default function Header() {
   const location = useLocation();
   
   const getTitle = () => {
     switch (location.pathname) {
-      case '/dashboard': return 'Dashboard';
-      case '/products': return 'Kelola Produk';
-      case '/cashier': return 'Kasir (PoS)';
-      case '/history': return 'Riwayat Transaksi';
+      case '/admin/dashboard': return 'Dashboard';
+      case '/admin/products': return 'Kelola Produk';
+      case '/admin/cashier': return 'Kasir (PoS)';
+      case '/admin/history': return 'Riwayat Transaksi';
       default: return 'UMKM PoS';
     }
   };
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 px-6 flex items-center justify-between sticky top-0 z-10">
-      <h2 className="text-lg font-semibold text-gray-800">{getTitle()}</h2>
+      <div className="flex items-center gap-4">
+        <Link 
+          to="/" 
+          className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors bg-gray-50 hover:bg-indigo-50 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-indigo-200"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Webstore
+        </Link>
+        <div className="h-6 w-[1px] bg-gray-200 hidden sm:block" />
+        <h2 className="text-lg font-semibold text-gray-800 hidden sm:block">{getTitle()}</h2>
+      </div>
       
       <div className="flex items-center gap-4">
         <div className="relative hidden md:block">

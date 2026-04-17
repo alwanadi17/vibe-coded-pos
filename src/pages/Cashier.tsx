@@ -249,6 +249,7 @@ export default function Cashier() {
                     src={item.urlGambar}
                     alt={item.nama}
                     className="w-full h-full"
+                    fallbackTextSize="text-xl"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

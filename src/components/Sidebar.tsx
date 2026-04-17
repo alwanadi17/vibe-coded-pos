@@ -4,14 +4,16 @@
  */
 
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, History, Store } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, History, Store, Truck, Tags } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/cashier', label: 'Kasir (PoS)', icon: ShoppingCart },
-  { to: '/products', label: 'Kelola Produk', icon: Package },
-  { to: '/history', label: 'Riwayat Transaksi', icon: History },
+  { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/cashier', label: 'Kasir (PoS)', icon: ShoppingCart },
+  { to: '/admin/products', label: 'Kelola Produk', icon: Package },
+  { to: '/admin/categories', label: 'Kelola Kategori', icon: Tags },
+  { to: '/admin/suppliers', label: 'Kelola Supplier', icon: Truck },
+  { to: '/admin/history', label: 'Riwayat Transaksi', icon: History },
 ];
 
 export default function Sidebar() {

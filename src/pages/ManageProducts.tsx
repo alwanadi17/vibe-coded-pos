@@ -4,48 +4,68 @@
  */
 
 import { useState, useEffect, FormEvent } from 'react';
-import { Plus, Search, Edit2, Trash2, Package, X } from 'lucide-react';
-import { getAllProducts, addProduct, updateProduct, deleteProduct } from '../lib/db';
-import { Product } from '../types';
+import { Plus, Search, Edit2, Trash2, Package, X, Truck } from 'lucide-react';
+import { getAllProducts, addProduct, updateProduct, deleteProduct, getAllSuppliers, getAllCategories } from '../lib/db';
+import { Product, Supplier, Category } from '../types';
 import { formatCurrency, cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import ProductImage from '../components/ProductImage';
 
 export default function ManageProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const [formData, setFormData] = useState<Partial<Product> & { harga: string | number, stok: string | number }>({
     nama: '',
-    harga: 0,
-    stok: 0,
+    harga: '',
+    stok: '',
     kategori: '',
     urlGambar: '',
+    supplierId: '',
   });
+
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     loadProducts();
+    loadSuppliers();
+    loadCategories();
   }, []);
+
+  async function loadCategories() {
+    const data = await getAllCategories();
+    setCategories(data);
+  }
 
   async function loadProducts() {
     const data = await getAllProducts();
     setProducts(data);
   }
 
+  async function loadSuppliers() {
+    const data = await getAllSuppliers();
+    setSuppliers(data.filter(s => s.status === 'aktif'));
+  }
+
   const handleOpenModal = (product?: Product) => {
     if (product) {
       setEditingProduct(product);
-      setFormData(product);
+      setFormData({
+        ...product,
+        supplierId: product.supplierId || '',
+      });
     } else {
       setEditingProduct(null);
       setFormData({
         nama: '',
-        harga: 0,
-        stok: 0,
+        harga: '',
+        stok: '',
         kategori: '',
         urlGambar: '',
+        supplierId: '',
       });
     }
     setIsModalOpen(true);
@@ -60,7 +80,10 @@ export default function ManageProducts() {
     e.preventDefault();
     const productData = {
       ...formData,
+      harga: Number(formData.harga),
+      stok: Number(formData.stok),
       id: editingProduct ? editingProduct.id : crypto.randomUUID(),
+      supplierId: formData.supplierId || null,
     } as Product;
 
     if (editingProduct) {
@@ -144,6 +167,7 @@ export default function ManageProducts() {
                             src={product.urlGambar}
                             alt={product.nama}
                             className="w-full h-full"
+                            fallbackTextSize="text-lg"
                           />
                         </div>
                         <div>
@@ -243,7 +267,7 @@ export default function ManageProducts() {
                     value={formData.nama}
                     onChange={e => setFormData({ ...formData, nama: e.target.value })}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                    placeholder="Contoh: Kopi Susu Gula Aren"
+                    placeholder="Contoh: Santal 33 EDP 100ml"
                   />
                 </div>
 
@@ -254,8 +278,9 @@ export default function ManageProducts() {
                       required
                       type="number"
                       value={formData.harga}
-                      onChange={e => setFormData({ ...formData, harga: Number(e.target.value) })}
+                      onChange={e => setFormData({ ...formData, harga: e.target.value })}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="Contoh: 3500000"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -264,25 +289,25 @@ export default function ManageProducts() {
                       required
                       type="number"
                       value={formData.stok}
-                      onChange={e => setFormData({ ...formData, stok: Number(e.target.value) })}
+                      onChange={e => setFormData({ ...formData, stok: e.target.value })}
                       className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                      placeholder="Contoh: 15"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Kategori (Brand)</label>
                   <select
                     required
                     value={formData.kategori}
                     onChange={e => setFormData({ ...formData, kategori: e.target.value })}
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   >
-                    <option value="">Pilih Kategori</option>
-                    <option value="Minuman">Minuman</option>
-                    <option value="Makanan">Makanan</option>
-                    <option value="Snack">Snack</option>
-                    <option value="Lainnya">Lainnya</option>
+                    <option value="">Pilih Kategori/Brand</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.namaKategori}>{c.namaKategori}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -295,6 +320,22 @@ export default function ManageProducts() {
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                     placeholder="https://example.com/image.jpg"
                   />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                    <Truck className="w-3 h-3" /> Supplier (Merek)
+                  </label>
+                  <select
+                    value={formData.supplierId || ''}
+                    onChange={e => setFormData({ ...formData, supplierId: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  >
+                    <option value="">-- Tidak ada supplier --</option>
+                    {suppliers.map(s => (
+                      <option key={s.id} value={s.id}>{s.namaSupplier}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="pt-4 flex gap-3">

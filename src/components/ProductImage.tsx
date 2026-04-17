@@ -11,9 +11,10 @@ interface ProductImageProps {
   src?: string;
   alt: string;
   className?: string;
+  fallbackTextSize?: string;
 }
 
-export default function ProductImage({ src, alt, className }: ProductImageProps) {
+export default function ProductImage({ src, alt, className, fallbackTextSize = "text-4xl" }: ProductImageProps) {
   const [isError, setIsError] = useState(false);
 
   const getInitials = (name: string) => {
@@ -29,12 +30,11 @@ export default function ProductImage({ src, alt, className }: ProductImageProps)
     return (
       <div
         className={cn(
-          'flex flex-col items-center justify-center bg-gray-100 text-gray-400',
+          'flex flex-col items-center justify-center bg-[#1f2937] text-[#f3f4f6]',
           className
         )}
       >
-        <Package className="w-1/3 h-1/3 mb-1 opacity-50" />
-        <span className="text-[10px] font-bold tracking-tighter opacity-70">
+        <span className={cn("font-serif tracking-widest uppercase text-[#D4AF37]", fallbackTextSize)}>
           {getInitials(alt)}
         </span>
       </div>
